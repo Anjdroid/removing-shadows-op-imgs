@@ -1,4 +1,4 @@
-# removing-shadows-op-imgsđ
+# removing-shadows-op-imgs
 
 ## ARTICLE
 http://cs.haifa.ac.il/hagit/courses/seminars/shadowRemoval/Presentations/lecture10_files/Removing%20Shadows%20from%20Images.pdf
