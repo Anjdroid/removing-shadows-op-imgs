@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 
 import argparse
 
+from matplotlib.image import AxesImage
+
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Shadow removal')
@@ -86,24 +88,55 @@ class ShadyRemoval:
 
 		# get gradients
 		gradients = np.sqrt(np.power(G_x,2) + np.power(G_y,2))
-		print(gradients)
+		#print(gradients)
 		gradients = gradients / gradients.max() * 255
 
 		# direction
 		g_dir = np.arctan2(G_y,G_x)
 		
 		# non-maxima suppresion - thin edges
-		#suppressed = self.non_max_suppression(gradients, g_dir)
+		suppressed = gradients
+		# suppressed = self.non_max_suppression(gradients, g_dir)
+		
+		# TODO: test for better results
+		# Set high and low threshold
+		high_thresh = 70
+		low_thresh = 50
+		 
+		h, w = suppressed.shape
+		edge_mask = np.zeros((h, w), dtype=np.uint8)
+		 
+		# edge int >= strong= sure-edge
+		# < 'low' threshold=non-edge
+		sure_i, sure_j = np.where(suppressed >= high_thresh)
+		non_i, non_j = np.where(suppressed < low_thresh)
+		
+		# weak edges
+		weak_i, weak_j = np.where((suppressed <= high_thresh) & (suppressed >= low_thresh))
+		 
+		# Set same intensity value for all edge pixels
+		#edge_mask[sure_i, sure_j] = 255
+		edge_mask[non_i, non_j ] = 0
+		#edge_mask[weak_i, weak_j] = 75
 
- 
+		# connect or break weak edges
+		#for i in range(1, h-1):
+		#	for j in range(1, w-1):
+		#		if (out[i,j] == 75):
+		#			if 255 in [out[i+1, j-1],out[i+1, j],out[i+1, j+1],out[i, j-1],out[i, j+1],out[i-1, j-1],out[i-1, j],out[i-1, j+1]]:
+		#				out[i, j] = 255
+		#			else:
+		#				out[i, j] = 0
 		# threshold gradients
 		#combined[combined > 0.1] = 255
 		#combined[combined != 255] = 0
 		#out[out >= 1] = 1
 
-		plt.imshow(gradients, cmap='gray')
-		plt.title('edge detection')
-		plt.show()
+		#plt.imshow(suppressed, cmap='gray')
+		#plt.title('edge detection')
+		#plt.show()
+
+		return suppressed
 
 
 
@@ -142,9 +175,9 @@ class ShadyRemoval:
 		c2 = np.power(1.4388,-2)
 		gs = c1 * log_rg - c2 * log_bg
 
-		plt.imshow(gs, cmap ='gray')
-		plt.title('Grayscale invariant image')
-		plt.show()
+		#plt.imshow(gs, cmap ='gray')
+		#plt.title('Grayscale invariant image')
+		#plt.show()
 
 		# try dividing by red/blue
 		#mean_r = np.mean(r)
@@ -164,11 +197,8 @@ class ShadyRemoval:
 		#plt.title('Grayscale invariant image')
 		#plt.show()
 
-		self.detect_edges(gs)
-		self.detect_edges(gs_m)
-
-
 		
+		#self.detect_edges(gs_m)
 
 		# pk = E(lambda_k)S(lambda_k)q_k
 		# approx lightning by planck's law
@@ -180,6 +210,52 @@ class ShadyRemoval:
 
 		# isolate temp. term
 		# r'_k = log(r_k) = log(s_k/s_p) + (e_k - e_p) / T
+
+		#
+		# create intrinsic image for each RGB channel p(x,y)
+		# use thresholded derivatives to remove the effect of illumination
+		# sensor response is the multiplication of light and surface
+
+		# gradient of channel response
+		# log-image edge map
+
+		# gradient of grayscale invariant image gs(x,y)
+		grad_gs_inv = self.detect_edges(gs)
+		grad_log_rg = self.detect_edges(log_rg)
+		#grad_log_bg = self.detect_edges(log_bg)
+
+		# the difference between log colour responses removes the effect of the illumination
+		#g#rad_log = grad_log_rg - grad_log_bg  ## ?????????
+		#cv.imshow('',grad_log)
+		#cv.waitKey(0)
+
+		print(grad_gs_inv.shape)
+
+		tresholded = grad_log_rg.copy()
+		print(tresholded.shape)
+
+		## TODO: set up proper thresholds 
+		tresh1 = 20
+		tresh2 = 70
+		# factor out changes in grad at shadow edges
+		for i in range(grad_gs_inv.shape[0]):
+			for j in range(grad_gs_inv.shape[1]):
+				#print(grad_gs_inv[i][j])
+				#print(grad_log_rg[i][j])
+				if grad_gs_inv[i][j] < tresh1 and grad_log_rg[i][j] > tresh2:
+					tresholded[i][j] = 0 # NO CHANGE HERE
+
+		# whats supposed to happen:
+		# gradient image where sharp edges are indicative of material changes: no more sharp edges due to illumination -- shadows have been removed
+		fig, ax = plt.subplots(1,3)
+		ax[0].imshow(tresholded, cmap='gray')
+		ax[1].imshow(grad_gs_inv, cmap='gray')
+		ax[2].imshow(grad_log_rg, cmap='gray')
+		plt.show()
+
+
+
+
 
 
 if __name__ == '__main__':
