@@ -1,13 +1,25 @@
-# removing-shadows-op-imgs
+# Removing shadows from images
 
-## ARTICLE
-http://cs.haifa.ac.il/hagit/courses/seminars/shadowRemoval/Presentations/lecture10_files/Removing%20Shadows%20from%20Images.pdf
+A pipeline for shadow detection and removal.
 
-## data
-https://www.e-prostor.gov.si/fileadmin/struktura/Ortofoto/Navodilo_za_prenos_ortofotov.pdf
+## Prerequisites
 
+- python version >= 3.6
 
-EDGE MAP: intensity img = 1/3 (R+G+B)  
-EDGE MAP: illuminant-invariant image
+## How to setup and run
 
--- we calculate the edge maps by applying convolution with apporiate filter.
+- download zip or clone the project
+- go into folder 
+
+### install required packages
+
+$ pip install -r requirements.txt
+  
+- for shadow removal with default image:
+```
+python remove_shadows.py
+```
+- for shadow removal with specified image and visualisation of results:
+```
+python remove_shadows.py --image_path --visualize 1
+```
